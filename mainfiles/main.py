@@ -2,34 +2,33 @@ import random
 import pygame
 from constants import *
 
-pygame.init()
-GAME_DISPLAY = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
-pygame.display.set_caption('snake game')
-CLOCK = pygame.time.Clock()
-FONT = pygame.font.SysFont(None, 35)
-LFONT = pygame.font.SysFont(None, 75)
-BACKGROUND_IMAGE = pygame.image.load("snake.png")
-PAUSE_IMAGE = pygame.image.load("pause.jpg")
 
+def quit_game():
+    pygame.quit()
+    quit()
+
+
+def apple_create():
+    return (
+        round(random.randrange(0, DISPLAY_WIDTH - BLOCK_SIZE), -1),
+        round(random.randrange(0, DISPLAY_HEIGHT - BLOCK_SIZE), -1)
+    )
 
 def pause():
-    paused = True
-    while paused:
+    GAME_DISPLAY.fill(WHITE)
+    GAME_DISPLAY.blit(PAUSE_IMAGE, [280, 35])
+    message_to_screen("Paused", RED, 20, 'L')
+    message_to_screen("Press r for Resume and q for Quit", RED, 90, 's')
+    pygame.display.update()
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+                quit_game()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
-                    paused = False
+                    return
                 elif event.key == pygame.K_q:
-                    pygame.quit()
-                    quit()
-        GAME_DISPLAY.fill(WHITE)
-        GAME_DISPLAY.blit(PAUSE_IMAGE, [280, 35])
-        message_to_screen("Paused", RED, 20, 'L')
-        message_to_screen("Press r for Resume and q for Quit", RED, 90, 's')
-        pygame.display.update()
+                    quit_game()
 
 
 def score(score):
@@ -38,59 +37,46 @@ def score(score):
 
 
 def shortcuts():
-    intro1 = True
-    while intro1:
+    GAME_DISPLAY.fill(WHITE)
+    message_to_screen("Shortcuts for snake game", GREEN, -200, 'L')
+    message_to_screen("Play -> p", BLACK, -100, 's')
+    message_to_screen("Quit -> q", BLACK, -55, 's')
+    message_to_screen("Pause -> b", BLACK, 80, 's')
+    message_to_screen("Resume -> r", BLACK, 125, 's')
+    message_to_screen("Back -> e", BLACK, -10, 's')
+    message_to_screen("Shortcuts -> s", BLACK, 170, 's')
+    message_to_screen("Home -> h", BLACK, 35, 's')
+    pygame.display.update()
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+                quit_game()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_e:
-                    Intro()
-                    intro1 = False
+                if event.key == pygame.K_e or event.key == pygame.K_h:
+                    return
                 if event.key == pygame.K_q:
-                    pygame.quit()
-                    quit()
-                if event.key == pygame.K_h:
-                    Intro()
-                    intro1 = False
-        GAME_DISPLAY.fill(WHITE)
-        message_to_screen("Shortcuts for snake game", GREEN, -200, 'L')
-        message_to_screen("Play -> p", BLACK, -100, 's')
-        message_to_screen("Quit -> q", BLACK, -55, 's')
-        message_to_screen("Pause -> b", BLACK, 80, 's')
-        message_to_screen("Resume -> r", BLACK, 125, 's')
-        message_to_screen("Back -> e", BLACK, -10, 's')
-        message_to_screen("Shortcuts -> s", BLACK, 170, 's')
-        message_to_screen("Home -> h", BLACK, 35, 's')
-        pygame.display.update()
+                    quit_game()
 
 
 def intro():
-    intro = True
-    while intro:
+    while True:
         GAME_DISPLAY.fill(WHITE)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                    gameloop()
-                    intro = False
-                elif event.key == pygame.K_q:
-                    intro = False
-                    pygame.quit()
-                    quit()
-                elif event.key == pygame.K_s:
-                    shortcuts()
-                    intro = False
         GAME_DISPLAY.blit(BACKGROUND_IMAGE, [85, 50])
         message_to_screen("Welcome to snake game", GREEN, -200, 'L')
         message_to_screen("Press q for Quit", BLACK, -100, 's')
         message_to_screen("Press p for Play", BLACK, -50, 's')
         message_to_screen("Press s for Shortcuts", BLACK, 0, 's')
         pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    gameloop()
+                elif event.key == pygame.K_q:
+                    quit_game()
+                elif event.key == pygame.K_s:
+                    shortcuts()
 
 
 def text_objects(text, color, size):
@@ -112,42 +98,37 @@ def snake_create(snakelist):
         pygame.draw.rect(GAME_DISPLAY, GREEN, [XY[0], XY[1], BLOCK_SIZE, BLOCK_SIZE])
 
 
+def game_over():
+    message_to_screen("Game over", RED, -200, 'L')
+    message_to_screen("Press p for Play again!", BLACK, -100, 's')
+    message_to_screen("Press q for Quit!", BLACK, -50, 's')
+    message_to_screen("Press h for Home!", BLACK, 0, 's')
+    pygame.display.update()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    quit_game()
+                if event.key == pygame.K_h:
+                    intro()
+                if event.key == pygame.K_p:
+                    gameloop()
+
+
 def gameloop():
-    gameExit = False
-    gameOver = False
+    randappleX, randappleY = apple_create()
     lead_x = DISPLAY_WIDTH / 2
     lead_y = DISPLAY_HEIGHT / 2
     snakelist = []
     snakelength = 1
     lead_x_change = 0
     lead_y_change = 0
-    randappleX = round(random.randrange(0, DISPLAY_WIDTH - BLOCK_SIZE) / 10.0) * 10.0
-    randappleY = round(random.randrange(0, DISPLAY_HEIGHT - BLOCK_SIZE) / 10.0) * 10.0
-    while not gameExit:
-        if gameOver is True:
-            message_to_screen("Game over", RED, -200, 'L')
-            message_to_screen("Press p for Play again!", BLACK, -100, 's')
-            message_to_screen("Press q for Quit!", BLACK, -50, 's')
-            message_to_screen("Press h for Home!", BLACK, 0, 's')
-            pygame.display.update()
-        while gameOver is True:
-
-            pygame.display.update()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    gameExit = True
-                    gameOver = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        gameOver = False
-                        gameExit = True
-                    if event.key == pygame.K_h:
-                        intro()
-                    if event.key == pygame.K_p:
-                        gameloop()
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                gameExit = True
+                quit_game()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     lead_x_change = -BLOCK_SIZE
@@ -164,7 +145,7 @@ def gameloop():
                 elif event.key == pygame.K_b:
                     pause()
         if lead_x <= 0 or lead_y <= 0 or lead_x >= DISPLAY_WIDTH or lead_y >= DISPLAY_HEIGHT:
-            gameOver = True
+            game_over()
 
         lead_x += lead_x_change
         lead_y += lead_y_change
@@ -174,22 +155,26 @@ def gameloop():
         snake_create(snakelist)
         score(snakelength - 1)
         pygame.display.update()
-
-        snakehead = [lead_x, lead_y]
-        snakelist.append(snakehead)
+        snakelist.append([lead_x, lead_y])
         if snakelength < len(snakelist):
             del(snakelist[0])
 
         if lead_x == randappleX and lead_y == randappleY:
-            randappleX = round(random.randrange(0, DISPLAY_WIDTH - BLOCK_SIZE) / 10.0) * 10.0
-            randappleY = round(random.randrange(0, DISPLAY_HEIGHT - BLOCK_SIZE) / 10.0) * 10.0
+            randappleX, randappleY = apple_create()
             snakelength += 1
 
         CLOCK.tick(FPS)
 
-    pygame.quit()
-    quit()
+    quit_game()
 
 
 if __name__ == '__main__':
+    pygame.init()
+    GAME_DISPLAY = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
+    pygame.display.set_caption('snake game')
+    CLOCK = pygame.time.Clock()
+    FONT = pygame.font.SysFont(None, 35)
+    LFONT = pygame.font.SysFont(None, 75)
+    BACKGROUND_IMAGE = pygame.image.load("snake.png")
+    PAUSE_IMAGE = pygame.image.load("pause.jpg")
     intro()
